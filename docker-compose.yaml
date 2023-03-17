@@ -1,13 +1,20 @@
 version: '3'
 services:
   flask:
+    container_name: api
     image: webapp-flask
     build:
       context: .
       dockerfile: Docker/Dockerfile-flask
+    restart: unless-stopped
     volumes:
       - "./:/app"
+    networks:
+      BarBehaviourSimulation:
+        ipv4_address: ${API_IPV4}
+
   nginx:
+    container_name: nginx
     image: webapp-nginx
     build:
       context: .
@@ -16,3 +23,26 @@ services:
       - 5000:80
     depends_on:
       - flask
+    networks:
+      BarBehaviourSimulation:
+        ipv4_address: ${NGINX_IPV4}
+
+  sql-server-db:
+    container_name: mssql
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - 1433:1433
+    environment:
+      SA_PASSWORD: "75Bky%mN7R"
+      ACCEPT_EULA: "Y"
+    networks:
+      BarBehaviourSimulation:
+        ipv4_address: ${MSSQL_IPV4}
+
+networks:
+  BarBehaviourSimulation:
+    driver: "bridge"
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.44.0.0/16
